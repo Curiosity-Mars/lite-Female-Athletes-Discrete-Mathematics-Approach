@@ -1,0 +1,52 @@
+Figure 3a (Multivariate Regression Analysis)
+
+import statsmodels.api as sm
+import pandas as pd
+
+# Placeholder for data: replace with actual clinical data
+df = pd.DataFrame({
+    'VEL_UEL': [...],       # binary: 1 if treated, 0 if control
+    'Testosterone': [...],
+    'PFMT_freq': [...],
+    'CoreTraining': [...],
+    'T_cho': [...],
+    'Outcome_bi': [...]      # e.g., dry incontinence at 1 year
+})
+
+# Define predictors and response
+X = df[['VEL_UEL', 'Testosterone', 'PFMT_freq', 'CoreTraining', 'T_cho']]
+y = df['Outcome_bi']
+
+# Add intercept
+X = sm.add_constant(X)
+
+# Multivariate logistic regression
+model = sm.Logit(y, X).fit()
+print(model.summary())
+
+
+Figure 3b (Variance Inflation Factor: Multicollinearity Check)
+
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+
+# Compute VIF for each predictor
+vif_data = pd.DataFrame()
+vif_data['feature'] = X.columns
+vif_data['VIF'] = [variance_inflation_factor(X.values, i) for i in range(X.shape[1])]
+print(vif_data)
+
+
+Figure 3c (IPTW: Weighted Mean Estimation)
+
+
+# Placeholder: treatment group indicators and estimated propensity scores
+treated = np.array([...])          # 1 = treated, 0 = control
+propensity_scores = np.array([...])
+outcome = np.array([...])          # e.g., 1HrPadTest improvement score
+
+# IPTW weights
+weights = treated / propensity_scores + (1 - treated) / (1 - propensity_scores)
+
+# Weighted mean
+weighted_mean = np.average(outcome, weights=weights)
+print(f"Weighted mean improvement: {weighted_mean:.2f}")
