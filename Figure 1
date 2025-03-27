@@ -1,0 +1,22 @@
+from graphviz import Digraph
+
+dot = Digraph(comment='Patient Selection and PS Matching')
+
+# Nodes
+dot.node('A', '354 elite female athletes\n(SUI, initial enrollment)')
+dot.node('B', '295 patients\n(PFMT only group)')
+dot.node('C', '136 final controls\n(after dropouts, MUS req.)')
+dot.node('D', '48 patients\n(VEL+UEL + PFMT)')
+dot.node('E', '41 matched controls\n(PS matched)')
+dot.node('F', '41 matched VEL+UEL\n(PS matched)')
+
+# Edges
+dot.edge('A', 'B', 'PFMT only')
+dot.edge('A', 'D', 'VEL+UEL + PFMT')
+dot.edge('B', 'C', 'Dropouts, MUS excluded')
+dot.edge('C', 'E', 'PS Matching (n=41)')
+dot.edge('D', 'F', 'PS Matching (n=41)')
+
+# Render
+dot.render('figure1_patient_selection', format='png', cleanup=False)
+dot
