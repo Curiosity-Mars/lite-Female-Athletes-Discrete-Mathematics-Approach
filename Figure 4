@@ -1,0 +1,47 @@
+Figure 4 (Network Graph with VIF-Scaled Nodes)
+
+import networkx as nx
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+
+# Placeholder: correlation matrix of selected clinical variables
+corr_matrix = pd.DataFrame(...)
+
+# Inverse of absolute correlation coefficients for edge weights
+inv_corr = 1 / corr_matrix.abs()
+np.fill_diagonal(inv_corr.values, 0)  # Remove self-loop
+
+# Create NetworkX graph
+G = nx.Graph()
+
+# Add nodes with VIF-based size
+vif_dict = {
+    'VEL_UEL': 3.02,
+    'Testosterone': 2.78,
+    'PFMT_freq': 1.68,
+    'CoreTraining': 1.07,
+    'T_cho': 1.20
+}
+
+for node in corr_matrix.columns:
+    size = vif_dict.get(node, 1.0) * 300  # Default size for other nodes
+    G.add_node(node, size=size)
+
+# Add edges based on inverse correlations
+for i, var1 in enumerate(corr_matrix.columns):
+    for j, var2 in enumerate(corr_matrix.columns):
+        if i < j:
+            weight = inv_corr.iloc[i, j]
+            if weight < 10:  # threshold to limit weak links
+                G.add_edge(var1, var2, weight=weight)
+
+# Node positions and drawing
+pos = nx.spring_layout(G, seed=42)
+sizes = [G.nodes[n]['size'] for n in G.nodes]
+
+plt.figure(figsize=(10, 8))
+nx.draw(G, pos, with_labels=True, node_size=sizes, edge_color='gray', alpha=0.7)
+plt.title("Figure 4: Network Graph of Clinical Variables")
+plt.tight_layout()
+plt.savefig("figure4_network_graph.png")
