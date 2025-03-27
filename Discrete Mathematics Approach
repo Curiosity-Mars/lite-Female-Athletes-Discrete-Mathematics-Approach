@@ -1,0 +1,112 @@
+import pandas as pd
+import networkx as nx
+import matplotlib.pyplot as plt
+import json
+
+# Load the Excel file
+file_path = 'your_file_path.xlsx'  # Replace with your actual file path
+df = pd.read_excel(file_path)
+
+# Extract the node labels and matrix values
+nodes = df.columns[1:]
+matrix = df.iloc[:, 1:].values
+
+# Define nodes to be removed
+nodes_to_remove = {'y', 't', 'ad', 'ae', 'v', 'e', 'ac', 'f', 'ab', 'u'}
+
+# Remove the specified nodes from the nodes list and matrix
+nodes = [node for node in nodes if node not in nodes_to_remove]
+matrix = df.loc[~df.iloc[:, 0].isin(nodes_to_remove), ~df.columns.isin(nodes_to_remove)].values
+
+# Define the different time periods for nodes
+nodes_time_periods = {
+    'period_1': ['b', 'c', 'd', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'R', 'q', 'r', 's', 'w', 'x', 'z', 'aa', 'af', 'ag', 'ah', 'ai', 'aj', 'ak', 'al', 'am', 'an', 'ao', 'ap', 'aq'],
+    'period_2': ['as', 'at', 'au', 'av', 'aw', 'ax', 'ay', 'az'],
+    'period_3': ['ba', 'bb', 'bc', 'bd', 'be', 'bf', 'bg', 'bh', 'bi', 'bj', 'ar']
+}
+
+# Add missing nodes to 'period_1' for simplicity
+nodes_time_periods['period_1'].extend(['P'])
+
+# Assign a color to each time period
+color_map = {
+    'period_1': 'skyblue',
+    'period_2': 'lightgreen',
+    'period_3': 'lightcoral'
+}
+
+# Create a color list for each node based on its time period
+node_colors = []
+for node in nodes:
+    for period, period_nodes in nodes_time_periods.items():
+        if node in period_nodes:
+            node_colors.append(color_map[period])
+
+# Create a NetworkX graph
+G = nx.Graph()
+
+# Add nodes to the graph
+for node in nodes:
+    G.add_node(node)
+
+# Add edges to the graph with weights as the inverse correlation values
+for i in range(len(nodes)):
+    for j in range(i + 1, len(nodes)):
+        weight = matrix[i, j]
+        if not pd.isna(weight) and weight != 0:
+            G.add_edge(nodes[i], nodes[j], weight=1/abs(weight))  # Use absolute value to avoid negative edge lengths
+
+# VIF values for important nodes
+vif_values = {
+    'aq': 3.023,
+    'ai': 2.778,
+    'an': 1.678,
+    'l': 1.072,
+    'ak': 1.199
+}
+
+# Define a new base node size for less important nodes (doubling the current size)
+base_node_size = 2000
+
+# Define a smaller base size for other nodes
+other_node_size = base_node_size * 0.5
+
+# Create a list of node sizes based on VIF values, adjusting the base size
+node_sizes = []
+for node in G.nodes:
+    if node in vif_values:
+        node_sizes.append(base_node_size * vif_values[node])
+    else:
+        node_sizes.append(other_node_size)
+
+# Generate fixed positions for nodes
+fixed_pos = nx.spring_layout(G, seed=42)
+
+# Draw the updated network graph with node sizes based on VIF values
+plt.figure(figsize=(15, 10))
+nx.draw_networkx_nodes(G, fixed_pos, node_size=node_sizes, node_color=node_colors)
+nx.draw_networkx_edges(G, fixed_pos, edge_color='gray', width=[G[u][v]['weight'] for u, v in G.edges()])
+nx.draw_networkx_labels(G, fixed_pos, font_size=10, font_family='sans-serif')
+plt.title("Network Graph with Node Sizes Based on VIF Values")
+plt.axis('off')  # Remove axis
+plt.tight_layout()  # Remove excess whitespace
+plt.show()
+
+# Save the updated network graph as an image file
+output_path = 'your_output_path.png'  # Replace with your desired output path
+plt.figure(figsize=(15, 10))
+nx.draw_networkx_nodes(G, fixed_pos, node_size=node_sizes, node_color=node_colors)
+nx.draw_networkx_edges(G, fixed_pos, edge_color='gray', width=[G[u][v]['weight'] for u, v in G.edges()])
+nx.draw_networkx_labels(G, fixed_pos, font_size=10, font_family='sans-serif')
+plt.title("Network Graph with Node Sizes Based on VIF Values")
+plt.axis('off')  # Remove axis
+plt.tight_layout()  # Remove excess whitespace
+plt.savefig(output_path)
+plt.close()
+
+# Save node positions to a file for reuse
+pos_path = 'node_positions.json'  # Replace with your desired path
+with open(pos_path, 'w') as f:
+    json.dump(fixed_pos, f)
+
+output_path, pos_path
