@@ -1,0 +1,45 @@
+Figure 5a, 5b, 5c (Shortest Path Analysis in Clinical Network)
+
+import networkx as nx
+import matplotlib.pyplot as plt
+
+# Define the graph structure (nodes and weighted edges)
+G = nx.Graph()
+
+# Add key nodes with VIF-based sizes
+vif_values = {'ap': 1, 'av': 1.5, 'bi': 3.0, 'bj': 2.5, 'an': 1.7, 'aq': 3.0, 'q': 1.3, 'af': 1.8}
+for node, vif in vif_values.items():
+    G.add_node(node, size=vif * 300)
+
+# Define edges with inverse correlation-based weights
+edges = [
+    ('ap', 'av', 1.2),
+    ('av', 'bi', 1.0),
+    ('bi', 'bj', 1.1),
+    ('bi', 'aq', 1.4),
+    ('aq', 'bj', 1.3),
+    ('q', 'aq', 1.5),
+    ('ap', 'af', 1.3),
+    ('af', 'av', 1.1)
+]
+
+for u, v, w in edges:
+    G.add_edge(u, v, weight=w)
+
+# Layout and drawing
+pos = nx.spring_layout(G, seed=42)
+sizes = [G.nodes[n]['size'] for n in G.nodes]
+edge_labels = nx.get_edge_attributes(G, 'weight')
+
+plt.figure(figsize=(10, 8))
+nx.draw(G, pos, with_labels=True, node_size=sizes, edge_color='lightgray', width=2)
+nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
+
+# Highlight shortest path in 5a: ap → av → bi → bj
+path_5a = nx.shortest_path(G, source='ap', target='bj', weight='weight')
+path_edges_5a = list(zip(path_5a[:-1], path_5a[1:]))
+nx.draw_networkx_edges(G, pos, edgelist=path_edges_5a, edge_color='black', width=3)
+
+plt.title("Figure 5: Shortest Path Network with Treatment Branches")
+plt.tight_layout()
+plt.savefig("figure5_shortest_path.png")
